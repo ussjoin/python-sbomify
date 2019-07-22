@@ -1,10 +1,9 @@
-import requests #pip3 install requests
-from anytree import RenderTree #pip3 install anytree
+import requests  # pip3 install requests
 from anytree.exporter import JsonExporter
-import configparser #Base library
+import configparser  # Base library
 import json
 
-from SBOMLibrary import SBOMLibrary, GitHubSBOMLibrary
+from sbomify.sbomlibrary import SbomLibrary
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -23,9 +22,20 @@ def retrieveDependencies(library):
     if not library.hasDependencies:
         return #That was easy!
 
+    if not library.packageRepositoryURL.startswith("https://github.com/"):
+        return # TODO: Do something smarter here
+
+    ownerandrepo = library.packageRepositoryURL[19:].split("/")
+
+    if not len(ownerandrepo) >= 2:
+        return # TODO: Do something smarter here
+
+    owner = ownerandrepo[0]
+    repo = ownerandrepo[1]
+
     variables = {
-        "ownerName": library.githubOwner,
-        "repoName": library.githubRepoName
+        "ownerName": owner,
+        "repoName": repo
     }
 
     query = """
@@ -42,7 +52,6 @@ def retrieveDependencies(library):
                     packageManager
                     packageName
                     repository {
-                      description
                       nameWithOwner
                       isArchived
                       licenseInfo {
@@ -69,13 +78,12 @@ def retrieveDependencies(library):
         for dep in deps:
 
             if dep['node']['repository'] is not None:
-                tnode = GitHubSBOMLibrary(dep['node']['packageName'],
+                tnode = SbomLibrary(dep['node']['packageName'],
                     version = dep['node']['requirements'],
                     packageManager = dep['node']['packageManager'],
-                    githubNameWithOwner = dep['node']['repository']['nameWithOwner'],
-                    description = dep['node']['repository']['description'],
+                    packageRepositoryURL = f"{dep['node']['repository']['nameWithOwner']}",
                     unmaintained = dep['node']['repository']['isArchived'],
-                    hasDependencies = dep['node']['hasDependencies'], parentNode = library
+                    hasDependencies = dep['node']['hasDependencies'], parent = library
                     )
                 if dep['node']['repository']['licenseInfo'] is not None:
                     tnode.licenseString = dep['node']['repository']['licenseInfo']['spdxId']
@@ -83,18 +91,17 @@ def retrieveDependencies(library):
                 #print(library.packageRepositoryURL)
                 print(dep)
                 #exit()
-                tnode = SBOMLibrary(dep['node']['packageName'],
+                tnode = SbomLibrary(dep['node']['packageName'],
                     version = dep['node']['requirements'],
                     packageManager = dep['node']['packageManager'],
-                    #githubNameWithOwner = dep['node']['repository']['nameWithOwner'],
                     hasDependencies = False, incompleteReason = "Unable to determine repository host",
-                    parent = library # TODO THIS IS WRONG
+                    parent = library
                     )
 
-foom = GitHubSBOMLibrary("snipe-it", githubNameWithOwner = "snipe/snipe-it", hasDependencies = True)
+foom = SbomLibrary("snipe-it", packageRepositoryURL = "https://github.com/snipe/snipe-it", hasDependencies = True)
 retrieveDependencies(foom)
-for child in foom.children:
-   retrieveDependencies(child)
+# for child in foom.children:
+#    retrieveDependencies(child)
 
 with open("out.json", "w") as f:
     exporter = JsonExporter(indent=2, sort_keys=True)

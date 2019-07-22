@@ -1,16 +1,20 @@
-from anytree import RenderTree #pip3 install anytree
-from anytree.importer import JsonImporter
-import configparser #Base library
-import json # Base library
+from anytree import RenderTree  # pip3 install anytree
+from anytree.importer import DictImporter, JsonImporter
+import json  # Base library
+from xml.dom import minidom
 
-from SBOMLibrary import SBOMLibrary, GitHubSBOMLibrary
+from sbomify.sbomlibrary import SbomLibrary
 
 tree = {}
 
 with open("out.json", "r") as f:
-    importer = JsonImporter()
+    baseimporter = DictImporter(nodecls=SbomLibrary)
+    importer = JsonImporter(dictimporter=baseimporter)
     tree = importer.read(f)
 
-print(RenderTree(tree))
+tree
 
-#
+#print(RenderTree(tree))
+thestr = tree.toCycloneDX()
+reparsed = minidom.parseString(thestr)
+print(reparsed.toprettyxml(indent="  "))
