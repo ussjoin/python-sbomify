@@ -52,10 +52,16 @@ def retrieveDependencies(library):
                     packageManager
                     packageName
                     repository {
+                      description
                       nameWithOwner
                       isArchived
                       licenseInfo {
                         spdxId
+                      }
+                      defaultBranchRef {
+                        target {
+                          oid
+                        }
                       }
                     }
                     requirements
@@ -81,16 +87,16 @@ def retrieveDependencies(library):
                 tnode = SbomLibrary(dep['node']['packageName'],
                     version = dep['node']['requirements'],
                     packageManager = dep['node']['packageManager'],
-                    packageRepositoryURL = f"{dep['node']['repository']['nameWithOwner']}",
+                    packageRepositoryURL = f"https://github.com/{dep['node']['repository']['nameWithOwner']}",
                     unmaintained = dep['node']['repository']['isArchived'],
+                    commitHash = dep['node']['repository']['defaultBranchRef']['target']['oid'],
+                    description = dep['node']['repository']['description'],
                     hasDependencies = dep['node']['hasDependencies'], parent = library
                     )
                 if dep['node']['repository']['licenseInfo'] is not None:
                     tnode.licenseString = dep['node']['repository']['licenseInfo']['spdxId']
             else:
-                #print(library.packageRepositoryURL)
                 print(dep)
-                #exit()
                 tnode = SbomLibrary(dep['node']['packageName'],
                     version = dep['node']['requirements'],
                     packageManager = dep['node']['packageManager'],

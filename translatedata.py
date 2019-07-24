@@ -15,6 +15,7 @@ with open("out.json", "r") as f:
 tree
 
 #print(RenderTree(tree))
-thestr = tree.toCycloneDX()
-reparsed = minidom.parseString(thestr)
-print(reparsed.toprettyxml(indent="  "))
+thestr = tree.toSWID()
+print(thestr)
+#reparsed = minidom.parseString(thestr)
+#print(reparsed.toprettyxml(indent="  "))
