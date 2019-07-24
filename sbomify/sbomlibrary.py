@@ -113,6 +113,7 @@ class SbomLibrary(NodeMixin):
         return returnables
 
     def toSWID(self):
+        # Documentation: https://nvlpubs.nist.gov/nistpubs/ir/2016/NIST.IR.8060.pdf
         # SWID theory of operation
         #
         # SWID doesn't allow nesting of component tags. However, it does allow a
@@ -135,6 +136,3 @@ class SbomLibrary(NodeMixin):
 
     def sbomToJSON(sbomRoot):
         return "TODO JSON output"
-
-    def sbomToCoSWID(sbomRoot):
-        return "TODO CoSWID output"
