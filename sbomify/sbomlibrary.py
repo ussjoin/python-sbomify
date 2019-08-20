@@ -70,8 +70,35 @@ class SbomLibrary(NodeMixin):
 
         return tostring(bom)
 
-    def sbomToSPDX(sbomRoot):
-        return "TODO SPDX output"
+    def makeSPDXTagId(self):
+        # SPDX tags seem to be internally valid only, rather than needing to be global.
+        return f"SPDXRef-{self.name}-{self.commitHash}"
+
+    def makeSPDXRepresentationOfNode(self):
+        representation = (
+            f"PackageName: {self.name} \n"
+            f"SPDXID: {self.makeSPDXTagId()} \n"
+            f"PackageVersion: {self.version} \n" # TODO: not really correct
+            f"PackageDownloadLocation: {self.packageRepositoryURL} \n"
+            f"PackageHomePage: {self.packageRepositoryURL} \n"
+            f"PackageLicenseDeclared: {self.licenseString} \n"
+        )
+
+        # Make the forward links
+        for child in self.children:
+            link = f"Relationship: {self.makeSPDXTagId()} HAS_PREREQUISITE {child.makeSPDXTagId()}"
+            representation += f"\n{link}"
+
+        # Now go do the kids.
+        for child in self.children:
+            representation += "\n" + child.makeSPDXRepresentationOfNode()
+
+        return representation
+
+    def toSPDX(self):
+
+        rep = self.makeSPDXRepresentationOfNode()
+        return rep
 
     def makeSWIDTagId(self):
         # TODO: Resolve inherent issue that https://nvlpubs.nist.gov/nistpubs/ir/2016/NIST.IR.8060.pdf
